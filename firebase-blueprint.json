@@ -1,0 +1,84 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "User profile information",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "displayName": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "customFields": { "type": "array", "items": { "type": "string" } }
+      },
+      "required": ["uid", "email"]
+    },
+    "Trade": {
+      "title": "Trading Entry",
+      "description": "A single trading record",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Owner of the trade" },
+        "asset": { "type": "string", "description": "Asset symbol (e.g., BTC, EURUSD)" },
+        "broker": { "type": "string", "description": "Broker or App name" },
+        "type": { "type": "string", "enum": ["buy", "sell"] },
+        "entryPrice": { "type": "number" },
+        "exitPrice": { "type": "number" },
+        "quantity": { "type": "number" },
+        "fees": { "type": "number" },
+        "stopLoss": { "type": "number" },
+        "takeProfit": { "type": "number" },
+        "pnl": { "type": "number", "description": "Calculated Profit and Loss" },
+        "tags": { "type": "array", "items": { "type": "string" } },
+        "notes": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "customData": { "type": "object", "additionalProperties": { "type": "string" } }
+      },
+      "required": ["uid", "asset", "type", "entryPrice", "quantity", "timestamp"]
+    },
+    "Withdrawal": {
+      "title": "Withdrawal Entry",
+      "description": "A withdrawal record",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "amount": { "type": "number" },
+        "date": { "type": "string", "format": "date-time" },
+        "notes": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "amount", "date", "timestamp"]
+    },
+    "DailyLog": {
+      "title": "Daily Log Entry",
+      "description": "A general update or note for the day",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "content": { "type": "string" },
+        "sentiment": { "type": "string", "enum": ["neutral", "bullish", "bearish"] },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "content", "timestamp"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profile documents"
+    },
+    "/trades/{tradeId}": {
+      "schema": "Trade",
+      "description": "Trading records"
+    },
+    "/withdrawals/{withdrawalId}": {
+      "schema": "Withdrawal",
+      "description": "Withdrawal records"
+    },
+    "/dailyLogs/{logId}": {
+      "schema": "DailyLog",
+      "description": "General daily updates and notes"
+    }
+  }
+}
