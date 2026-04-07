@@ -74,6 +74,7 @@ service cloud.firestore {
       return email is string && (
         email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$") ||
         email.matches("^\\+[0-9]{10,15}$") ||
+        email.matches("^[a-zA-Z0-9_]{3,30}$") || // Allow simple usernames
         email == ""
       );
     }

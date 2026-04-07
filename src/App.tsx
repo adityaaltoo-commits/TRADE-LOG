@@ -51,8 +51,8 @@ export default function App() {
         if (!userDoc.exists()) {
           const newProfile = {
             uid: user.uid,
-            email: user.email || user.phoneNumber || '',
-            displayName: user.displayName || 'Trader',
+            email: user.email?.split('@')[0] || 'Trader', // Use username part of fake email
+            displayName: user.email?.split('@')[0] || 'Trader',
             photoURL: user.photoURL || '',
             createdAt: Timestamp.now(),
             customFields: ['Agent', 'App Name'],
