@@ -25,44 +25,15 @@ export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        const userRef = doc(db, 'users', user.uid);
-        
-        // Initial check/create
-        try {
-          const userDoc = await getDoc(userRef);
-          if (!userDoc.exists()) {
-            const newProfile = {
-              uid: user.uid,
-              email: user.email!,
-              displayName: user.displayName,
-              photoURL: user.photoURL,
-              createdAt: Timestamp.now(),
-              customFields: ['Agent', 'App Name'],
-              brokers: ['Binance', 'Bybit', 'Exness', 'MT5', 'MT4', 'TradingView']
-            };
-            await setDoc(userRef, newProfile);
-          }
-        } catch (error) {
-          console.error('Error checking user:', error);
-        }
-
-        // Real-time listener for profile
-        const unsubProfile = onSnapshot(userRef, (doc) => {
-          if (doc.exists()) {
-            setUserProfile(doc.data() as UserProfile);
-          }
-        });
-
-        setUser(user);
-        setLoading(false);
-        return () => unsubProfile();
-      } else {
-        setUser(null);
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setUser(user);
+      if (!user) {
         setUserProfile(null);
-        setLoading(false);
+        setTrades([]);
+        setWithdrawals([]);
+        setDailyLogs([]);
       }
+      setLoading(false);
     });
 
     return () => unsubscribe();
@@ -71,6 +42,40 @@ export default function App() {
   useEffect(() => {
     if (!user) return;
 
+    const userRef = doc(db, 'users', user.uid);
+
+    // Profile initialization and listener
+    const initProfile = async () => {
+      try {
+        const userDoc = await getDoc(userRef);
+        if (!userDoc.exists()) {
+          const newProfile = {
+            uid: user.uid,
+            email: user.email || user.phoneNumber || '',
+            displayName: user.displayName || 'Trader',
+            photoURL: user.photoURL || '',
+            createdAt: Timestamp.now(),
+            customFields: ['Agent', 'App Name'],
+            brokers: ['Binance', 'Bybit', 'Exness', 'MT5', 'MT4', 'TradingView']
+          };
+          await setDoc(userRef, newProfile);
+        }
+      } catch (error) {
+        handleFirestoreError(error, OperationType.WRITE, `users/${user.uid}`);
+      }
+    };
+
+    initProfile();
+
+    const unsubscribeProfile = onSnapshot(userRef, (doc) => {
+      if (doc.exists()) {
+        setUserProfile(doc.data() as UserProfile);
+      }
+    }, (error) => {
+      handleFirestoreError(error, OperationType.GET, `users/${user.uid}`);
+    });
+
+    // Data listeners
     const tradesQuery = query(
       collection(db, 'trades'),
       where('uid', '==', user.uid),
@@ -120,6 +125,7 @@ export default function App() {
     });
 
     return () => {
+      unsubscribeProfile();
       unsubscribeTrades();
       unsubscribeWithdrawals();
       unsubscribeLogs();
@@ -324,12 +330,12 @@ export default function App() {
           
           <div className="flex items-center gap-4">
             <div className="flex flex-col items-end mr-2">
-              <span className="text-sm font-medium text-text-primary">{user.displayName}</span>
+              <span className="text-sm font-medium text-text-primary">{userProfile?.displayName || 'Trader'}</span>
               <span className="text-xs text-text-secondary">Trader</span>
             </div>
             <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center border border-accent/20">
-              {user.photoURL ? (
-                <img src={user.photoURL} alt="" className="w-full h-full rounded-xl object-cover" />
+              {userProfile?.photoURL ? (
+                <img src={userProfile.photoURL} alt="" className="w-full h-full rounded-xl object-cover" />
               ) : (
                 <UserIcon className="text-accent w-6 h-6" />
               )}
